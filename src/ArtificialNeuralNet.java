@@ -1,9 +1,9 @@
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class ANN {
+public class ArtificialNeuralNet {
 
-    public ANN(int trainingDataSize) {
+    public ArtificialNeuralNet(int trainingDataSize) {
 
         this.trainingDataSize = trainingDataSize;
 
@@ -19,7 +19,7 @@ public class ANN {
 
     private Double[] inputLayer;
     private Double[] hiddenLayer;
-    private Double outputLayer;
+    private double outputLayer;
 
     private Double[][] input2HiddenWeights;
     private Double[] hidden2OutputWeights;
@@ -45,7 +45,6 @@ public class ANN {
                 for (int i = 0; i < trainingDataSize; i++) {
                     double currentInput2HiddenLayer = 0d;
                     for (int j = 0; j < trainingDataSize; j++) {
-//                        currentInput2HiddenLayer += (inputLayer[j] * input2HiddenWeights[i][j]);
                         currentInput2HiddenLayer += (inputLayer[j] * input2HiddenWeights[j][i]);
                     }
                     currentInput2HiddenLayer += biasInput2Hidden;
@@ -79,9 +78,10 @@ public class ANN {
                 Double[] correctedHidden2OutputWeights = new Double[trainingDataSize];
                 for (int i = 0; i < trainingDataSize; i++) {
 
-                    double valueChangeForWeight_i = learningRate                           // learning rate
-                            * hiddenLayer[i]                         // output_h_i
-                            * (outputLayer - actual)      // output_o * (1 - output_o)
+                    double valueChangeForWeight_i =
+                            learningRate                    // learning rate
+                                * hiddenLayer[i]            // output_h_i
+                                * (outputLayer - actual)    // output_o * (1 - output_o)
                     ;
                     correctedHidden2OutputWeights[i] = hidden2OutputWeights[i] - valueChangeForWeight_i;
                 }

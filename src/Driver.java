@@ -50,17 +50,17 @@ public class Driver {
             List<InstanceEntry> testDataSet = nFoldedInstanceEntries.get(i); // Test Data
             List<InstanceEntry> trainingData = new ArrayList<>();
 
-            ANN ann = new ANN(testDataSet.get(0).getFeatureValues().length);
+            ArtificialNeuralNet artificialNeuralNet = new ArtificialNeuralNet(testDataSet.get(0).getFeatureValues().length);
 
             for (int j = 0; j < numFolds; j++) {
                 if (j != i) { // Training data
-                    ann.trainAnn(nFoldedInstanceEntries.get(j), learningRate, numEpochs);
+                    artificialNeuralNet.trainAnn(nFoldedInstanceEntries.get(j), learningRate, numEpochs);
                 }
             }
 
             int currentCorrectClassifications = 0;
             for (InstanceEntry testEntry : testDataSet) {
-                ann.evaluate(testEntry);
+                artificialNeuralNet.evaluate(testEntry);
                 if (testEntry.getPredictedClassLabel().equalsIgnoreCase(testEntry.getClassLabel())) {
                     currentCorrectClassifications++;
                     correctClassifications++;
