@@ -55,7 +55,6 @@ public class Driver {
             for (int j = 0; j < numFolds; j++) {
                 if (j != i) { // Training data
                     ann.trainAnn(nFoldedInstanceEntries.get(j), learningRate, numEpochs);
-//                    trainingData.addAll(nFoldedInstanceEntries.get(j));
                 }
             }
 
@@ -98,8 +97,8 @@ public class Driver {
         /* ****************************************************************** */
 
         System.out.println("\n");
-//        double accuracy = (double) correctClassifications / allTrainingDataSize;
-        double accuracy = totalAccuracy / numFolds;
-        System.out.println("Accuracy: " + accuracy);
+        double accuracy = (double) correctClassifications / allTrainingDataSize;
+//        double accuracy = totalAccuracy / numFolds;
+        System.out.println("Accuracy: " + accuracy * 100);
     }
 }
