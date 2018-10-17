@@ -40,8 +40,13 @@ public class NFoldStratifiedHelper {
         Collections.shuffle(shuffledTrainingData);
 
         int entriesPerFold = (int) (allTrainingDataSize / numFolds);
-        int negEntriesPerFold = (int) Math.floor(entriesPerFold * ((double) negInstances / allTrainingDataSize));
+        int negEntriesPerFold = (int) Math.round(entriesPerFold * ((double) negInstances / allTrainingDataSize));
         int posEntriesPerFold = entriesPerFold - negEntriesPerFold;
+        if (negEntriesPerFold == posEntriesPerFold) {
+            negEntriesPerFold--;
+            entriesPerFold--;
+//            posEntriesPerFold++;
+        }
         int currentFold = 0;
         int entryCountInCurrentFold = 0;
         int negEntriesCountInCurrentFold = 0;
@@ -52,7 +57,8 @@ public class NFoldStratifiedHelper {
         int negIndex = 0;
         for (int i = 1; i <= numFolds; i++) {
 
-            do {
+            while (posEntriesCountInCurrentFold != posEntriesPerFold
+                    && posIndex < shuffledPosTrainingData.size()) {
                 InstanceEntry shuffledTrainingEntry = shuffledPosTrainingData.get(posIndex);
                 int originalIndexOfEntry = allTrainingData.indexOf(shuffledTrainingEntry);
                 entriesInCurrentFold.add(shuffledTrainingEntry);
@@ -60,9 +66,10 @@ public class NFoldStratifiedHelper {
                 posEntriesCountInCurrentFold++;
                 entryCountInCurrentFold++;
                 posIndex++;
-            } while (posEntriesCountInCurrentFold != posEntriesPerFold);
+            }
 
-            do {
+            while (negEntriesCountInCurrentFold != negEntriesPerFold
+                        && negIndex < shuffledNegTrainingData.size()) {
                 InstanceEntry shuffledTrainingEntry = shuffledNegTrainingData.get(negIndex);
                 int originalIndexOfEntry = allTrainingData.indexOf(shuffledTrainingEntry);
                 entriesInCurrentFold.add(shuffledTrainingEntry);
@@ -70,10 +77,32 @@ public class NFoldStratifiedHelper {
                 negEntriesCountInCurrentFold++;
                 entryCountInCurrentFold++;
                 negIndex++;
-            } while (negEntriesCountInCurrentFold != negEntriesPerFold);
+            }
 
-            if (entryCountInCurrentFold == entriesPerFold
-                    && i != numFolds) {
+            if (currentFold != numFolds - 1) {
+//            if (entryCountInCurrentFold == entriesPerFold
+//                    && currentFold != numFolds - 1) {
+                if (entryCountInCurrentFold < entriesPerFold) {
+                    while (entryCountInCurrentFold != entriesPerFold) {
+                        if (posIndex < shuffledPosTrainingData.size()) {
+                            InstanceEntry shuffledTrainingEntry = shuffledPosTrainingData.get(posIndex);
+                            int originalIndexOfEntry = allTrainingData.indexOf(shuffledTrainingEntry);
+                            entriesInCurrentFold.add(shuffledTrainingEntry);
+                            instanceEntry2Fold.put(originalIndexOfEntry, currentFold);
+                            posEntriesCountInCurrentFold++;
+                            entryCountInCurrentFold++;
+                            posIndex++;
+                        } else {
+                            InstanceEntry shuffledTrainingEntry = shuffledNegTrainingData.get(negIndex);
+                            int originalIndexOfEntry = allTrainingData.indexOf(shuffledTrainingEntry);
+                            entriesInCurrentFold.add(shuffledTrainingEntry);
+                            instanceEntry2Fold.put(originalIndexOfEntry, currentFold);
+                            negEntriesCountInCurrentFold++;
+                            entryCountInCurrentFold++;
+                            negIndex++;
+                        }
+                    }
+                }
                 posEntriesCountInCurrentFold = 0;
                 negEntriesCountInCurrentFold = 0;
                 nFoldedInstanceEntries.put(currentFold, new ArrayList<>(entriesInCurrentFold));
@@ -84,21 +113,35 @@ public class NFoldStratifiedHelper {
 
             // Add all remaining entries to last fold
             if (i == numFolds) {
-                do {
+                while (posIndex < shuffledPosTrainingData.size()) {
                     InstanceEntry shuffledTrainingEntry = shuffledPosTrainingData.get(posIndex);
                     int originalIndexOfEntry = allTrainingData.indexOf(shuffledTrainingEntry);
                     entriesInCurrentFold.add(shuffledTrainingEntry);
                     instanceEntry2Fold.put(originalIndexOfEntry, currentFold);
                     posIndex++;
-                } while (posIndex < shuffledPosTrainingData.size());
+                }
+//                do {
+//                    InstanceEntry shuffledTrainingEntry = shuffledPosTrainingData.get(posIndex);
+//                    int originalIndexOfEntry = allTrainingData.indexOf(shuffledTrainingEntry);
+//                    entriesInCurrentFold.add(shuffledTrainingEntry);
+//                    instanceEntry2Fold.put(originalIndexOfEntry, currentFold);
+//                    posIndex++;
+//                } while (posIndex < shuffledPosTrainingData.size());
 
-                do {
+                while (negIndex < shuffledNegTrainingData.size()) {
                     InstanceEntry shuffledTrainingEntry = shuffledNegTrainingData.get(negIndex);
                     int originalIndexOfEntry = allTrainingData.indexOf(shuffledTrainingEntry);
                     entriesInCurrentFold.add(shuffledTrainingEntry);
                     instanceEntry2Fold.put(originalIndexOfEntry, currentFold);
                     negIndex++;
-                } while (negIndex < shuffledNegTrainingData.size());
+                }
+//                do {
+//                    InstanceEntry shuffledTrainingEntry = shuffledNegTrainingData.get(negIndex);
+//                    int originalIndexOfEntry = allTrainingData.indexOf(shuffledTrainingEntry);
+//                    entriesInCurrentFold.add(shuffledTrainingEntry);
+//                    instanceEntry2Fold.put(originalIndexOfEntry, currentFold);
+//                    negIndex++;
+//                } while (negIndex < shuffledNegTrainingData.size());
 
                 nFoldedInstanceEntries.put(currentFold, new ArrayList<>(entriesInCurrentFold));
             }

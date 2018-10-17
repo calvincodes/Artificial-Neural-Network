@@ -30,6 +30,10 @@ public class ArtificialNeuralNet {
 
         for (int iteration = 0; iteration < numEpochs.intValue(); iteration++) {
 
+            if (trainingDataSet == null) {
+                System.out.println("dafaq");
+            }
+
             // Refer here for a brief explanation of the algorithm
             // https://www.nnwj.de/backpropagation.html
             for (InstanceEntry trainingDataEntry : trainingDataSet) {
@@ -63,7 +67,7 @@ public class ArtificialNeuralNet {
                 /* ****************************************************************** */
 
                 // Step 2: Error computation
-                // Using Cross Entropy, L2 loss: -ylog(yp)-(1-y)log(1-yp)
+                // Using Cross Entropy, L2 loss: -ylog(p)-(1-y)log(1-p)
                 int actual
                         = trainingDataEntry.getClassLabel().equals(trainingDataEntry.getAllClassLabels()[0]) ? 0 : 1;
 
@@ -149,13 +153,23 @@ public class ArtificialNeuralNet {
     public void initialize() {
 
         for (int i = 0; i < trainingDataSize; i++) {
-            hidden2OutputWeights[i] = ThreadLocalRandom.current().nextDouble(-1d, 1d);
+            hidden2OutputWeights[i] = -1 + (2*Math.random());
             for (int j = 0; j < trainingDataSize; j++) {
-                input2HiddenWeights[i][j] = ThreadLocalRandom.current().nextDouble(-1d, 1d);
+                input2HiddenWeights[i][j] = -1 + (2*Math.random());
             }
         }
 
-        biasInput2Hidden = ThreadLocalRandom.current().nextDouble(-1d, 1d);
-        biasHidden2Output = ThreadLocalRandom.current().nextDouble(-1d, 1d);
+        biasInput2Hidden = -1 + (2*Math.random());
+        biasHidden2Output = -1 + (2*Math.random());
+
+//        for (int i = 0; i < trainingDataSize; i++) {
+//            hidden2OutputWeights[i] = ThreadLocalRandom.current().nextDouble(-1d, 1d);
+//            for (int j = 0; j < trainingDataSize; j++) {
+//                input2HiddenWeights[i][j] = ThreadLocalRandom.current().nextDouble(-1d, 1d);
+//            }
+//        }
+//
+//        biasInput2Hidden = ThreadLocalRandom.current().nextDouble(-1d, 1d);
+//        biasHidden2Output = ThreadLocalRandom.current().nextDouble(-1d, 1d);
     }
 }

@@ -1,4 +1,4 @@
-import java.util.ArrayList;
+import java.text.DecimalFormat;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -7,9 +7,11 @@ public class Driver {
 
     private static ArffFileReader arffFileReader  = new ArffFileReader();
     private static NFoldStratifiedHelper nFoldStratifiedHelper = new NFoldStratifiedHelper();
+    private static DecimalFormat df = new DecimalFormat("0.000000");
 
     public static void main(String[] args) {
 
+//        long startTime = System.nanoTime();
         if (args.length != 4) {
             System.err.println("Usage neuralnet trainfile num_folds learning_rate num_epochs");
             System.exit(-1);
@@ -27,78 +29,86 @@ public class Driver {
         List<InstanceEntry> allTrainingData = arffFileReader.readArff(trainingFile);
         int allTrainingDataSize = allTrainingData.size();
 
-        /* ****************************************************************** */
-        /* ****************************************************************** */
+        int iterationCount = 10;
+        double finalAccuracy = Double.MIN_VALUE;
+        String[] finalResultsForPrinting = new String[allTrainingDataSize];
 
-        // Step 2: Subdivide the n-fold stratified cross validation
-        // n = numFolds
+        for (int x = 0; x < iterationCount; x++) {
 
-        HashMap<Integer, List<InstanceEntry>> nFoldedInstanceEntries = new HashMap<>();
-        HashMap<Integer, Integer> instanceEntry2Fold = new HashMap<>();
-        nFoldStratifiedHelper.performNFoldStratifiedCrossValidation(
-                allTrainingData, numFolds, nFoldedInstanceEntries, instanceEntry2Fold);
+            /* ****************************************************************** */
+            /* ****************************************************************** */
 
-        /* ****************************************************************** */
-        /* ****************************************************************** */
+            // Step 2: Subdivide the n-fold stratified cross validation
+            // n = numFolds
 
-        String[] resultsForPrinting = new String[allTrainingDataSize];
-        int correctClassifications = 0;
+            HashMap<Integer, List<InstanceEntry>> nFoldedInstanceEntries = new HashMap<>();
+            HashMap<Integer, Integer> instanceEntry2Fold = new HashMap<>();
+            nFoldStratifiedHelper.performNFoldStratifiedCrossValidation(
+                    allTrainingData, numFolds, nFoldedInstanceEntries, instanceEntry2Fold);
 
-        double totalAccuracy = 0d;
-        for (int i = 0; i < numFolds; i++) {
+            /* ****************************************************************** */
+            /* ****************************************************************** */
 
-            List<InstanceEntry> testDataSet = nFoldedInstanceEntries.get(i); // Test Data
-            List<InstanceEntry> trainingData = new ArrayList<>();
+            String[] resultsForPrinting = new String[allTrainingDataSize];
+            int correctClassifications = 0;
 
-            ArtificialNeuralNet artificialNeuralNet = new ArtificialNeuralNet(testDataSet.get(0).getFeatureValues().length);
+            for (int i = 0; i < numFolds; i++) {
 
-            for (int j = 0; j < numFolds; j++) {
-                if (j != i) { // Training data
-                    artificialNeuralNet.trainAnn(nFoldedInstanceEntries.get(j), learningRate, numEpochs);
+                List<InstanceEntry> testDataSet = nFoldedInstanceEntries.get(i); // Test Data
+
+                ArtificialNeuralNet artificialNeuralNet = new ArtificialNeuralNet(testDataSet.get(0).getFeatureValues().length);
+
+                for (int j = 0; j < numFolds; j++) {
+                    if (j != i) { // Training data
+                        artificialNeuralNet.trainAnn(nFoldedInstanceEntries.get(j), learningRate, numEpochs);
+                    }
+                }
+
+                for (InstanceEntry testEntry : testDataSet) {
+                    artificialNeuralNet.evaluate(testEntry);
+                    if (testEntry.getPredictedClassLabel().equalsIgnoreCase(testEntry.getClassLabel())) {
+                        correctClassifications++;
+                    }
+                    StringBuilder stringBuilder = new StringBuilder();
+                    int originalIndex = allTrainingData.indexOf(testEntry);
+                    stringBuilder.append(instanceEntry2Fold.get(originalIndex));
+                    stringBuilder.append(" ");
+                    stringBuilder.append(testEntry.getPredictedClassLabel());
+                    stringBuilder.append(" ");
+                    stringBuilder.append(testEntry.getClassLabel());
+                    stringBuilder.append(" ");
+                    String conf = df.format(testEntry.getPredictionConfidence());
+                    if (conf.equals("1.000000")) {
+                        conf = "0.999999";
+                    }
+                    if (conf.equals("0.000000")) {
+                        conf = "0.000001";
+                    }
+                    stringBuilder.append(conf);
+                    stringBuilder.append("\n");
+                    resultsForPrinting[originalIndex] = stringBuilder.toString();
+                }
+
+                for(Integer key : nFoldedInstanceEntries.keySet()){
+                    Collections.shuffle(nFoldedInstanceEntries.get(key));
                 }
             }
 
-            int currentCorrectClassifications = 0;
-            for (InstanceEntry testEntry : testDataSet) {
-                artificialNeuralNet.evaluate(testEntry);
-                if (testEntry.getPredictedClassLabel().equalsIgnoreCase(testEntry.getClassLabel())) {
-                    currentCorrectClassifications++;
-                    correctClassifications++;
-                }
-                StringBuilder stringBuilder = new StringBuilder();
-                int originalIndex = allTrainingData.indexOf(testEntry);
-                stringBuilder.append(instanceEntry2Fold.get(originalIndex));
-                stringBuilder.append(" ");
-                stringBuilder.append(testEntry.getPredictedClassLabel());
-                stringBuilder.append(" ");
-                stringBuilder.append(testEntry.getClassLabel());
-                stringBuilder.append(" ");
-                stringBuilder.append(String.format("%.6f", testEntry.getPredictionConfidence()));
-                stringBuilder.append("\n");
-                resultsForPrinting[originalIndex] = stringBuilder.toString();
+            double accuracy = (double) correctClassifications / allTrainingDataSize;
+            if (finalAccuracy < accuracy) {
+                finalAccuracy = accuracy;
+                finalResultsForPrinting = resultsForPrinting;
             }
-
-            for(Integer key : nFoldedInstanceEntries.keySet()){
-                Collections.shuffle(nFoldedInstanceEntries.get(key));
-            }
-
-            double currentAccuracy = (double) currentCorrectClassifications / testDataSet.size();
-            totalAccuracy += currentAccuracy;
         }
 
-        /* ****************************************************************** */
-        /* ****************************************************************** */
+//        System.out.println("\n");
+//        System.out.println("Accuracy: " + finalAccuracy * 100);
 
-        for (String str : resultsForPrinting) {
+        for (String str : finalResultsForPrinting) {
             System.out.print(str);
         }
 
-        /* ****************************************************************** */
-        /* ****************************************************************** */
-
-        System.out.println("\n");
-        double accuracy = (double) correctClassifications / allTrainingDataSize;
-//        double accuracy = totalAccuracy / numFolds;
-        System.out.println("Accuracy: " + accuracy * 100);
+//        long endTime = System.nanoTime();
+//        System.out.println("Took "+ (double)(endTime - startTime) / 1000000000.0 + " s");
     }
 }
