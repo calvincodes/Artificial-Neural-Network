@@ -1,4 +1,5 @@
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -8,6 +9,7 @@ public class Driver {
     private static ArffFileReader arffFileReader  = new ArffFileReader();
     private static NFoldStratifiedHelper nFoldStratifiedHelper = new NFoldStratifiedHelper();
     private static DecimalFormat df = new DecimalFormat("0.000000");
+    private static RoCPlot roCPlot = new RoCPlot();
 
     public static void main(String[] args) {
 
@@ -29,9 +31,10 @@ public class Driver {
         List<InstanceEntry> allTrainingData = arffFileReader.readArff(trainingFile);
         int allTrainingDataSize = allTrainingData.size();
 
-        int iterationCount = 10;
+        int iterationCount = 1;
         double finalAccuracy = Double.MIN_VALUE;
         String[] finalResultsForPrinting = new String[allTrainingDataSize];
+        List<InstanceEntry> finalTestedEntries = new ArrayList<>();
 
         for (int x = 0; x < iterationCount; x++) {
 
@@ -69,6 +72,9 @@ public class Driver {
                     if (testEntry.getPredictedClassLabel().equalsIgnoreCase(testEntry.getClassLabel())) {
                         correctClassifications++;
                     }
+                    if (testEntry.getPredictedClassLabel().equals(testEntry.getAllClassLabels()[1])) {
+                        finalTestedEntries.add(testEntry);
+                    }
                     StringBuilder stringBuilder = new StringBuilder();
                     int originalIndex = allTrainingData.indexOf(testEntry);
                     stringBuilder.append(instanceEntry2Fold.get(originalIndex));
@@ -100,6 +106,8 @@ public class Driver {
                 finalResultsForPrinting = resultsForPrinting;
             }
         }
+
+        roCPlot.plotRoc(finalTestedEntries);
 
 //        System.out.println("\n");
 //        System.out.println("Accuracy: " + finalAccuracy * 100);
